@@ -15,7 +15,7 @@ recevez par e-mail le **compte rendu Word** et la **transcription** complète.
 
 ## Votre clé Mistral
 
-- Créez-la sur [console.mistral.ai](https://console.mistral.ai/api-keys). La transcription est facturée sur votre compte.
+- Créez-la sur [console.mistral.ai](https://console.mistral.ai/api-keys) ; une [vidéo pas à pas](https://mediaserver.ip-paris.fr/permalink/v126d5d01ee484ud8y4x/) montre la marche à suivre. La transcription est facturée sur votre compte.
 - Elle n'est envoyée qu'à Mistral (vérification) et au serveur n8n PracTice, qui ne la conserve ni ne la journalise.
 - La page peut la **mémoriser dans votre navigateur** si vous cochez la case prévue (à éviter sur un
   ordinateur partagé). Le bouton « Oublier ma clé » l'efface.
