@@ -382,6 +382,10 @@
   }
   .pastille.ok { color: var(--succes); border-color: color-mix(in srgb, var(--succes) 40%, transparent); background: var(--succes-voile); }
   .pastille.manque { color: var(--alerte); border-color: color-mix(in srgb, var(--alerte) 40%, transparent); background: var(--alerte-voile); }
+  .pastille.attente { color: var(--texte-faible); border-color: var(--trait); background: var(--surface-creuse); }
+  .titre-cle-ligne { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .detail-cle { font-size: 12.5px; margin: 0; color: var(--alerte); }
+  .detail-cle[hidden] { display: none; }
   .reglages-corps {
     padding: 4px 17px 17px;
     display: flex;
@@ -461,18 +465,22 @@
   <section class="fiche" aria-labelledby="titre-cle">
     <div class="reglages-corps" style="border-top:none; padding-top:16px">
       <div class="champ">
-        <label for="cle" id="titre-cle">Votre clé API Mistral</label>
+        <div class="titre-cle-ligne">
+          <label for="cle" id="titre-cle">Votre clé API Mistral</label>
+          <span class="pastille attente" id="etat-cle" role="status" aria-live="polite">à saisir</span>
+        </div>
         <div class="cle-ligne">
           <input type="password" id="cle" placeholder="Collez votre clé" autocomplete="off" spellcheck="false">
           <button type="button" class="petit-bouton" id="voir" aria-controls="cle" aria-pressed="false">Afficher</button>
         </div>
+        <p class="detail-cle" id="detail-cle" hidden></p>
       </div>
       <label class="coche"><input type="checkbox" id="memoriser"> <span>Mémoriser ma clé sur cet appareil <span class="optionnel">(à éviter sur un ordinateur partagé)</span></span></label>
       <div class="liens-cle">
         <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener noreferrer" style="font-size:12.5px">Créer une clé sur console.mistral.ai</a>
         <button type="button" class="lien-bouton" id="oublier" hidden>Oublier ma clé</button>
       </div>
-      <p class="note">La clé part uniquement vers le serveur n8n du service PracTice, qui la vérifie auprès de Mistral puis s'en sert pour cette seule transcription. Elle n'y est ni conservée ni journalisée.</p>
+      <p class="note">La clé n'est envoyée qu'à Mistral, pour la vérifier dès sa saisie, et au serveur n8n du service PracTice, qui s'en sert pour cette seule transcription sans la conserver ni la journaliser.</p>
     </div>
   </section>
 
@@ -562,7 +570,10 @@
   var PREFS = "smart-minutes-individuel";
   var TRANCHE = 900; // secondes, comme le nœud « Découper l'audio »
 
-  var etat = { fichier: null, duree: null, envoi: false };
+  var MISTRAL_MODELES = "https://api.mistral.ai/v1/models";
+
+  // cle : "vide" | "verif" | "ok" | "ko" | "injoignable"
+  var etat = { fichier: null, duree: null, envoi: false, cle: "vide" };
 
   /* ---------- Préférences, gardées dans ce navigateur seulement ---------- */
   // L'e-mail est toujours retenu ; la clé seulement si la case est cochée.
@@ -584,18 +595,67 @@
     majBouton();
   }
 
+  /* ---------- Vérification de la clé, dès la saisie ---------- */
+  // La page interroge directement Mistral (GET /v1/models, gratuit) : on sait tout
+  // de suite si la clé est bonne, avant d'envoyer le moindre fichier.
+  var ETATS_CLE = {
+    vide: ["à saisir", "attente"],
+    verif: ["vérification…", "attente"],
+    ok: ["clé valide", "ok"],
+    ko: ["clé refusée", "manque"],
+    injoignable: ["non vérifiée", "attente"]
+  };
+  function afficherEtatCle(nouveau, detail) {
+    etat.cle = nouveau;
+    var e = $("etat-cle");
+    e.textContent = ETATS_CLE[nouveau][0];
+    e.className = "pastille " + ETATS_CLE[nouveau][1];
+    $("detail-cle").textContent = detail || "";
+    $("detail-cle").hidden = !detail;
+    majBouton();
+  }
+
+  var tour = 0, minuterie = null;
+  function verifierCle() {
+    var cle = $("cle").value.trim();
+    var ceTour = ++tour;
+    if (!cle) { afficherEtatCle("vide"); return; }
+    afficherEtatCle("verif");
+    fetch(MISTRAL_MODELES, { headers: { Authorization: "Bearer " + cle }, cache: "no-store" })
+      .then(function (rep) {
+        if (ceTour !== tour) return; // une saisie plus récente a pris le relais
+        if (rep.ok) afficherEtatCle("ok");
+        else if (rep.status === 401 || rep.status === 403) afficherEtatCle("ko", "Mistral ne reconnaît pas cette clé. Vérifiez-la sur console.mistral.ai, rubrique API Keys.");
+        else afficherEtatCle("injoignable", "Mistral n'a pas pu confirmer la clé (code " + rep.status + "). Vous pouvez tout de même envoyer : le serveur la revérifiera.");
+      })
+      .catch(function () {
+        if (ceTour !== tour) return;
+        afficherEtatCle("injoignable", "Mistral est injoignable pour le moment. Vous pouvez tout de même envoyer : le serveur la revérifiera.");
+      });
+  }
+  function verifierBientot() {
+    clearTimeout(minuterie);
+    tour++;
+    if (!$("cle").value.trim()) { afficherEtatCle("vide"); return; }
+    afficherEtatCle("verif");
+    minuterie = setTimeout(verifierCle, 500);
+  }
+
   var r = lirePrefs();
   $("email").value = r.email || "";
   $("cle").value = r.cle || "";
   $("memoriser").checked = !!r.cle;
   $("oublier").hidden = !r.cle;
   ["email", "cle"].forEach(function (id) { $(id).addEventListener("input", ecrirePrefs); });
+  $("cle").addEventListener("input", verifierBientot);
   $("memoriser").addEventListener("change", ecrirePrefs);
+  if (r.cle) verifierCle();
 
   $("oublier").addEventListener("click", function () {
     $("cle").value = "";
     $("memoriser").checked = false;
     ecrirePrefs();
+    verifierBientot();
     $("cle").focus();
   });
   $("voir").addEventListener("click", function () {
@@ -739,7 +799,7 @@
   function majBouton() {
     var pret = !!etat.fichier
       && $("email").value.trim() !== ""
-      && $("cle").value.trim() !== ""
+      && (etat.cle === "ok" || etat.cle === "injoignable")
       && !etat.envoi;
     $("envoyer").disabled = !pret;
   }
@@ -772,7 +832,7 @@
       var pct = Math.round(e.loaded / e.total * 100);
       $("barre-remplie").style.width = pct + "%";
       $("progression-pct").textContent = pct + " %";
-      if (pct >= 100) $("progression-etat").textContent = "Vérification de la clé Mistral…";
+      if (pct >= 100) $("progression-etat").textContent = "Finalisation de l'envoi…";
     });
 
     xhr.addEventListener("load", function () {

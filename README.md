@@ -7,8 +7,8 @@ recevez par e-mail le **compte rendu Word** et la **transcription** complète.
 
 ## Fonctionnement
 
-1. La page envoie l'audio et **votre clé API Mistral** au serveur n8n du service PracTice.
-2. La clé est vérifiée auprès de Mistral avant tout traitement ; une clé refusée n'engage rien.
+1. Dès que vous collez **votre clé API Mistral**, la page la vérifie directement auprès de Mistral : l'envoi n'est possible qu'avec une clé valide.
+2. La page envoie l'audio et la clé au serveur n8n du service PracTice, qui confirme la réception aussitôt.
 3. L'audio est découpé en tranches de 15 minutes, transcrit par Mistral Voxtral avec séparation des voix,
    les voix sont réunies d'une tranche à l'autre, puis le compte rendu est rédigé par ILaaS.
 4. Le compte rendu (.docx) et la transcription (.txt) arrivent par e-mail depuis `practice@imt-bs.eu`.
@@ -16,7 +16,7 @@ recevez par e-mail le **compte rendu Word** et la **transcription** complète.
 ## Votre clé Mistral
 
 - Créez-la sur [console.mistral.ai](https://console.mistral.ai/api-keys). La transcription est facturée sur votre compte.
-- Elle n'est envoyée qu'au serveur n8n PracTice, qui ne la conserve ni ne la journalise.
+- Elle n'est envoyée qu'à Mistral (vérification) et au serveur n8n PracTice, qui ne la conserve ni ne la journalise.
 - La page peut la **mémoriser dans votre navigateur** si vous cochez la case prévue (à éviter sur un
   ordinateur partagé). Le bouton « Oublier ma clé » l'efface.
 
