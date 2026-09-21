@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>IMT Smart Minutes</title>
+<meta name="description" content="Déposez l'enregistrement d'une réunion : transcription et compte rendu Word par e-mail, avec votre propre clé Mistral. Service PracTice, IMT Business School.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    /* Neutres légèrement tirés vers le violet IMT-BS, pour qu'ils aient l'air choisis. */
+    --fond: #faf7f9;
+    --surface: #ffffff;
+    --surface-creuse: #f3eef2;
+    --trait: #e3d9e1;
+    --trait-fort: #cdbcc9;
+    --texte: #1d151b;
+    --texte-doux: #6b5c67;
+    --texte-faible: #8d7f88;
+
+    --violet: #ad1d89;
+    --violet-clair: #d84fb4;
+    --violet-voile: #f7e8f3;
+    --sur-violet: #ffffff;
+    --bleu: #00b8de;
+    --bleu-voile: #e2f6fb;
+
+    --succes: #1c7a52;
+    --succes-voile: #e4f4ec;
+    --alerte: #b3261e;
+    --alerte-voile: #fbe9e7;
+
+    --ombre: 0 1px 2px rgba(29, 21, 27, .05), 0 8px 24px -12px rgba(29, 21, 27, .18);
+    --rayon: 14px;
+    --display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+    --corps: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fond: #151014;
+      --surface: #1e181d;
+      --surface-creuse: #271f26;
+      --trait: #352c33;
+      --trait-fort: #4c4049;
+      --texte: #f4eef2;
+      --texte-doux: #b6a7b1;
+      --texte-faible: #8d7f88;
+      --violet: #e56bc2;
+      --violet-clair: #f09bd6;
+      --violet-voile: #33182b;
+      --sur-violet: #1a0f16;
+      --bleu: #4cd4f0;
+      --bleu-voile: #12303a;
+      --succes: #5fd6a2;
+      --succes-voile: #123023;
+      --alerte: #ff9b91;
+      --alerte-voile: #3a1c19;
+      --ombre: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --fond: #151014;
+    --surface: #1e181d;
+    --surface-creuse: #271f26;
+    --trait: #352c33;
+    --trait-fort: #4c4049;
+    --texte: #f4eef2;
+    --texte-doux: #b6a7b1;
+    --texte-faible: #8d7f88;
+    --violet: #e56bc2;
+    --violet-clair: #f09bd6;
+    --violet-voile: #33182b;
+    --sur-violet: #1a0f16;
+    --bleu: #4cd4f0;
+    --bleu-voile: #12303a;
+    --succes: #5fd6a2;
+    --succes-voile: #123023;
+    --alerte: #ff9b91;
+    --alerte-voile: #3a1c19;
+    --ombre: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--fond);
+    color: var(--texte);
+    font-family: var(--corps);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 660px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 40px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  /* ---- En-tête ---- */
+  .eyebrow {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--violet);
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(30px, 7vw, 40px);
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .lede {
+    margin: 10px 0 0;
+    color: var(--texte-doux);
+    max-width: 52ch;
+  }
+
+  /* ---- Zone de dépôt ---- */
+  .depot {
+    position: relative;
+    border: 1.5px dashed var(--trait-fort);
+    border-radius: var(--rayon);
+    background: var(--surface);
+    padding: 34px 22px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .depot:hover, .depot:focus-visible { border-color: var(--violet); background: var(--violet-voile); }
+  .depot.survol { border-color: var(--violet); background: var(--violet-voile); border-style: solid; }
+  .depot input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .depot-titre { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 0 0 4px; }
+  .depot-aide { margin: 0; color: var(--texte-faible); font-size: 13.5px; }
+
+  /* ---- Carte du fichier choisi ---- */
+  .fiche {
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    background: var(--surface);
+    box-shadow: var(--ombre);
+    overflow: hidden;
+  }
+  .fiche-haut {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+  }
+  .onde {
+    flex: none;
+    width: 44px; height: 44px;
+    border-radius: 11px;
+    background: var(--violet-voile);
+    color: var(--violet);
+    display: grid;
+    place-items: center;
+  }
+  .fiche-nom {
+    font-weight: 600;
+    word-break: break-word;
+    margin: 0 0 2px;
+    line-height: 1.35;
+  }
+  .fiche-meta {
+    margin: 0;
+    color: var(--texte-faible);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .retirer {
+    flex: none;
+    border: 1px solid var(--trait);
+    background: var(--surface-creuse);
+    color: var(--texte-doux);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .retirer:hover { color: var(--alerte); border-color: var(--alerte); }
+
+  /* Le plan de découpage : ce que le fichier va devenir. */
+  .plan {
+    border-top: 1px solid var(--trait);
+    background: var(--surface-creuse);
+    padding: 14px 18px 16px;
+  }
+  .plan-ligne {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--texte-doux);
+  }
+  .plan-ligne strong { color: var(--texte); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .tranches {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .tranche {
+    height: 8px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--violet), var(--violet-clair));
+    flex: 1 1 0;
+    min-width: 6px;
+  }
+  .tranche.partielle { opacity: .45; }
+
+  /* ---- Champs ---- */
+  .champs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .champ { display: flex; flex-direction: column; gap: 6px; }
+  .champ.large { grid-column: 1 / -1; }
+  label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--texte-doux);
+  }
+  .optionnel { font-weight: 400; color: var(--texte-faible); }
+  input[type="text"], input[type="email"], input[type="password"], input[type="url"], select, textarea {
+    font: inherit;
+    font-size: 14.5px;
+    color: var(--texte);
+    background: var(--surface);
+    border: 1px solid var(--trait);
+    border-radius: 9px;
+    padding: 9px 11px;
+    width: 100%;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { resize: vertical; min-height: 66px; line-height: 1.45; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, .depot:focus-visible {
+    outline: none;
+    border-color: var(--violet);
+    box-shadow: 0 0 0 3px var(--violet-voile);
+  }
+  select { appearance: none; background-image: none; cursor: pointer; }
+
+  /* ---- Envoi ---- */
+  .envoyer {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--sur-violet);
+    background: var(--violet);
+    border: none;
+    border-radius: 11px;
+    padding: 14px 20px;
+    width: 100%;
+    cursor: pointer;
+    transition: filter .15s;
+  }
+  .envoyer:hover:not(:disabled) { filter: brightness(1.08); }
+  .envoyer:disabled { opacity: .45; cursor: not-allowed; }
+
+  .progression { display: flex; flex-direction: column; gap: 8px; }
+  .barre {
+    height: 9px;
+    border-radius: 5px;
+    background: var(--surface-creuse);
+    border: 1px solid var(--trait);
+    overflow: hidden;
+  }
+  .barre > i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--violet), var(--bleu));
+    transition: width .2s ease-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .barre > i, .depot, .envoyer { transition: none; }
+  }
+  .progression-texte {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--texte-doux);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .message {
+    border-radius: var(--rayon);
+    padding: 15px 17px;
+    border: 1px solid;
+    font-size: 14px;
+  }
+  .message p { margin: 0; }
+  .message p + p { margin-top: 7px; }
+  .message.bien { background: var(--succes-voile); border-color: color-mix(in srgb, var(--succes) 35%, transparent); color: var(--succes); }
+  .message.mal  { background: var(--alerte-voile); border-color: color-mix(in srgb, var(--alerte) 35%, transparent); color: var(--alerte); }
+  .message strong { font-weight: 600; }
+
+  /* ---- Ce qui se passe ensuite ---- */
+  .etapes {
+    border-top: 1px solid var(--trait);
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+  .etapes h2 {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--texte-faible);
+    margin: 0;
+  }
+  .etape {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 11px;
+    align-items: baseline;
+    font-size: 13.5px;
+    color: var(--texte-doux);
+  }
+  .etape b {
+    color: var(--texte);
+    font-weight: 600;
+  }
+  .rang {
+    font-variant-numeric: tabular-nums;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--violet);
+    border: 1px solid var(--trait);
+    border-radius: 5px;
+    text-align: center;
+    line-height: 19px;
+    height: 21px;
+  }
+
+  /* ---- Réglages ---- */
+  details.reglages {
+    border: 1px solid var(--trait);
+    border-radius: var(--rayon);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  details.reglages > summary {
+    cursor: pointer;
+    padding: 13px 17px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--texte-doux);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+  }
+  details.reglages > summary::-webkit-details-marker { display: none; }
+  .pastille {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid;
+  }
+  .pastille.ok { color: var(--succes); border-color: color-mix(in srgb, var(--succes) 40%, transparent); background: var(--succes-voile); }
+  .pastille.manque { color: var(--alerte); border-color: color-mix(in srgb, var(--alerte) 40%, transparent); background: var(--alerte-voile); }
+  .reglages-corps {
+    padding: 4px 17px 17px;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    border-top: 1px solid var(--trait);
+  }
+  .note {
+    font-size: 12.5px;
+    color: var(--texte-faible);
+    margin: 0;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: .92em;
+    background: var(--surface-creuse);
+    border: 1px solid var(--trait);
+    border-radius: 5px;
+    padding: 1px 5px;
+  }
+
+  .cle-ligne { display: flex; gap: 8px; }
+  .cle-ligne input { flex: 1 1 auto; min-width: 0; }
+  .petit-bouton {
+    flex: none;
+    border: 1px solid var(--trait);
+    background: var(--surface-creuse);
+    color: var(--texte-doux);
+    border-radius: 9px;
+    padding: 0 12px;
+    font: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .petit-bouton:hover { color: var(--violet); border-color: var(--violet); }
+  .petit-bouton[hidden] { display: none; }
+  .coche {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--texte-doux);
+    cursor: pointer;
+  }
+  .coche input { margin: 3px 0 0; accent-color: var(--violet); }
+  .liens-cle { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+  a { color: var(--violet); }
+  .lien-bouton {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--texte-faible);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .lien-bouton:hover { color: var(--alerte); }
+
+  @media (max-width: 480px) {
+    .champs { grid-template-columns: 1fr; }
+    .page { padding-block: 28px 44px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <header>
+    <p class="eyebrow">PracTice · IMT Business School</p>
+    <h1>IMT Smart Minutes</h1>
+    <p class="lede">Déposez l'enregistrement d'une réunion. Il est découpé, transcrit avec ses intervenants, puis rédigé en compte rendu Word, qui vous arrive par e-mail.</p>
+  </header>
+
+  <section class="fiche" aria-labelledby="titre-cle">
+    <div class="reglages-corps" style="border-top:none; padding-top:16px">
+      <div class="champ">
+        <label for="cle" id="titre-cle">Votre clé API Mistral</label>
+        <div class="cle-ligne">
+          <input type="password" id="cle" placeholder="Collez votre clé" autocomplete="off" spellcheck="false">
+          <button type="button" class="petit-bouton" id="voir" aria-controls="cle" aria-pressed="false">Afficher</button>
+        </div>
+      </div>
+      <label class="coche"><input type="checkbox" id="memoriser"> <span>Mémoriser ma clé sur cet appareil <span class="optionnel">(à éviter sur un ordinateur partagé)</span></span></label>
+      <div class="liens-cle">
+        <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener noreferrer" style="font-size:12.5px">Créer une clé sur console.mistral.ai</a>
+        <button type="button" class="lien-bouton" id="oublier" hidden>Oublier ma clé</button>
+      </div>
+      <p class="note">La clé part uniquement vers le serveur n8n du service PracTice, qui la vérifie auprès de Mistral puis s'en sert pour cette seule transcription. Elle n'y est ni conservée ni journalisée.</p>
+    </div>
+  </section>
+
+  <div class="depot" id="depot" tabindex="0" role="button" aria-label="Choisir un enregistrement audio">
+    <input type="file" id="fichier" accept=".mp3,.m4a,.wav,.ogg,.flac,.webm,audio/*" aria-label="Enregistrement audio">
+    <p class="depot-titre">Glissez l'enregistrement ici</p>
+    <p class="depot-aide">ou cliquez pour le choisir · mp3, m4a, wav, ogg, flac, webm</p>
+  </div>
+
+  <div class="fiche" id="fiche" hidden>
+    <div class="fiche-haut">
+      <span class="onde" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/>
+        </svg>
+      </span>
+      <div style="flex:1 1 auto; min-width:0">
+        <p class="fiche-nom" id="fiche-nom">—</p>
+        <p class="fiche-meta" id="fiche-meta">—</p>
+      </div>
+      <button type="button" class="retirer" id="retirer">Retirer</button>
+    </div>
+    <div class="plan" id="plan">
+      <div class="plan-ligne">
+        <span id="plan-texte">Analyse de la durée…</span>
+        <strong id="plan-duree"></strong>
+      </div>
+      <div class="tranches" id="tranches" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="champs">
+    <div class="champ large">
+      <label for="titre">Nom de la réunion</label>
+      <input type="text" id="titre" placeholder="Réunion de service PracTice" autocomplete="off">
+    </div>
+    <div class="champ">
+      <label for="email">Adresse e-mail</label>
+      <input type="email" id="email" placeholder="prenom.nom@imt-bs.eu" autocomplete="email">
+    </div>
+    <div class="champ">
+      <label for="langue">Langue</label>
+      <select id="langue">
+        <option value="Français" selected>Français</option>
+        <option value="Anglais">Anglais</option>
+      </select>
+    </div>
+    <div class="champ large">
+      <label for="participants">Participants <span class="optionnel">— un par ligne, aide à nommer les voix</span></label>
+      <textarea id="participants" placeholder="Julien MORICE&#10;Marine CARAYON" autocomplete="off"></textarea>
+    </div>
+  </div>
+
+  <div>
+    <button type="button" class="envoyer" id="envoyer">Envoyer pour transcription</button>
+    <div class="progression" id="progression" hidden style="margin-top:14px">
+      <div class="barre"><i id="barre-remplie"></i></div>
+      <div class="progression-texte">
+        <span id="progression-etat">Envoi en cours…</span>
+        <span id="progression-pct">0 %</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="message bien" id="msg-ok" hidden></div>
+  <div class="message mal" id="msg-ko" hidden></div>
+
+  <section class="etapes">
+    <h2>Ce qui se passe ensuite</h2>
+    <div class="etape"><span class="rang">1</span><span><b>Découpage</b> en tranches de 15 minutes, sans réencodage.</span></div>
+    <div class="etape"><span class="rang">2</span><span><b>Transcription</b> tranche par tranche par Mistral Voxtral, avec séparation des voix.</span></div>
+    <div class="etape"><span class="rang">3</span><span><b>Réunion des voix</b> : les empreintes vocales rétablissent qui est qui d'une tranche à l'autre.</span></div>
+    <div class="etape"><span class="rang">4</span><span><b>Compte rendu</b> rédigé par ILaaS, envoyé en Word avec la transcription complète.</span></div>
+  </section>
+
+  <p class="note">La transcription est facturée sur votre compte Mistral ; la rédaction et l'envoi sont pris en charge par le service PracTice. L'enregistrement n'est pas conservé : il est supprimé du serveur dans les heures qui suivent.</p>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+  // Workflow n8n « IMT Smart Minutes individuel Production ».
+  var WEBHOOK = "https://n8n.srv1205184.hstgr.cloud/webhook/smart-minutes-page";
+  var PREFS = "smart-minutes-individuel";
+  var TRANCHE = 900; // secondes, comme le nœud « Découper l'audio »
+
+  var etat = { fichier: null, duree: null, envoi: false };
+
+  /* ---------- Préférences, gardées dans ce navigateur seulement ---------- */
+  // L'e-mail est toujours retenu ; la clé seulement si la case est cochée.
+  function lirePrefs() {
+    try {
+      var brut = window.localStorage.getItem(PREFS);
+      return brut ? JSON.parse(brut) : {};
+    } catch (e) { return {}; }
+  }
+  function ecrirePrefs() {
+    var memo = $("memoriser").checked;
+    try {
+      window.localStorage.setItem(PREFS, JSON.stringify({
+        email: $("email").value.trim(),
+        cle: memo ? $("cle").value.trim() : ""
+      }));
+    } catch (e) { /* navigation privée : on continue sans mémoriser */ }
+    $("oublier").hidden = !(memo && $("cle").value.trim());
+    majBouton();
+  }
+
+  var r = lirePrefs();
+  $("email").value = r.email || "";
+  $("cle").value = r.cle || "";
+  $("memoriser").checked = !!r.cle;
+  $("oublier").hidden = !r.cle;
+  ["email", "cle"].forEach(function (id) { $(id).addEventListener("input", ecrirePrefs); });
+  $("memoriser").addEventListener("change", ecrirePrefs);
+
+  $("oublier").addEventListener("click", function () {
+    $("cle").value = "";
+    $("memoriser").checked = false;
+    ecrirePrefs();
+    $("cle").focus();
+  });
+  $("voir").addEventListener("click", function () {
+    var cache = $("cle").type === "password";
+    $("cle").type = cache ? "text" : "password";
+    $("voir").textContent = cache ? "Masquer" : "Afficher";
+    $("voir").setAttribute("aria-pressed", String(cache));
+  });
+
+  /* ---------- Mise en forme ---------- */
+  function poids(octets) {
+    if (octets < 1024 * 1024) return Math.round(octets / 1024) + " Ko";
+    return (octets / (1024 * 1024)).toFixed(1).replace(".", ",") + " Mo";
+  }
+  function duree(s) {
+    var m = Math.floor(s / 60), r = Math.round(s % 60);
+    if (m < 60) return m + " min " + (r < 10 ? "0" : "") + r + " s";
+    return Math.floor(m / 60) + " h " + ((m % 60) < 10 ? "0" : "") + (m % 60);
+  }
+  function attente(secondes) {
+    var m = Math.round(secondes / 60);
+    if (secondes < 90) return "moins d'une minute";
+    return "environ " + m + " minute" + (m > 1 ? "s" : "");
+  }
+
+  /* ---------- Choix du fichier ---------- */
+  function choisir(f) {
+    if (!f) return;
+    etat.fichier = f;
+    etat.duree = null;
+    $("depot").hidden = true;
+    $("fiche").hidden = false;
+    $("fiche-nom").textContent = f.name;
+    $("fiche-meta").textContent = poids(f.size);
+    $("plan-texte").textContent = "Analyse de la durée…";
+    $("plan-duree").textContent = "";
+    $("tranches").textContent = "";
+    cacherMessages();
+    if (!$("titre").value.trim()) {
+      $("titre").value = f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+    }
+    mesurer(f);
+    majBouton();
+  }
+
+  // La durée se lit dans le navigateur : elle donne le nombre de tranches à venir.
+  function mesurer(f) {
+    var url = URL.createObjectURL(f);
+    var audio = new Audio();
+    var fini = false;
+    var termine = function (d) {
+      if (fini) return;
+      fini = true;
+      URL.revokeObjectURL(url);
+      etat.duree = d;
+      afficherPlan(d, f.size);
+    };
+    audio.addEventListener("loadedmetadata", function () {
+      termine(isFinite(audio.duration) ? audio.duration : null);
+    });
+    audio.addEventListener("error", function () { termine(null); });
+    setTimeout(function () { termine(etat.duree); }, 6000);
+    audio.preload = "metadata";
+    audio.src = url;
+  }
+
+  function afficherPlan(d, octets) {
+    var boite = $("tranches");
+    boite.textContent = "";
+    if (!d) {
+      $("plan-texte").textContent = "Durée illisible ici ; le découpage se fera côté serveur.";
+      $("plan-duree").textContent = "";
+      return;
+    }
+    $("fiche-meta").textContent = poids(octets) + " · " + duree(d);
+    var n = Math.max(1, Math.ceil(d / TRANCHE));
+    // Estimation tirée des mesures réelles : 59 min traitées en 68 s, plus ~9 s
+    // par tranche pour la comparaison des empreintes vocales, plus la rédaction.
+    var estime = 20 + d / 60 * 1.1 + n * 9;
+    $("plan-texte").textContent = n === 1
+      ? "Une seule tranche, pas de découpage nécessaire."
+      : n + " tranches de 15 minutes, transcrites l'une après l'autre.";
+    $("plan-duree").textContent = "≈ " + attente(estime);
+    for (var i = 0; i < n; i++) {
+      var t = document.createElement("span");
+      t.className = "tranche";
+      var reste = d - i * TRANCHE;
+      if (reste < TRANCHE) {
+        t.className += " partielle";
+        t.style.flexGrow = String(Math.max(0.12, reste / TRANCHE));
+      }
+      boite.appendChild(t);
+    }
+  }
+
+  function retirer() {
+    etat.fichier = null;
+    etat.duree = null;
+    $("fichier").value = "";
+    $("fiche").hidden = true;
+    $("depot").hidden = false;
+    cacherMessages();
+    majBouton();
+  }
+
+  /* ---------- Interactions de dépôt ---------- */
+  var depot = $("depot");
+  $("fichier").addEventListener("change", function (e) { choisir(e.target.files[0]); });
+  $("retirer").addEventListener("click", retirer);
+  depot.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("fichier").click(); }
+  });
+  ["dragenter", "dragover"].forEach(function (n) {
+    depot.addEventListener(n, function (e) { e.preventDefault(); depot.classList.add("survol"); });
+  });
+  ["dragleave", "drop"].forEach(function (n) {
+    depot.addEventListener(n, function (e) { e.preventDefault(); depot.classList.remove("survol"); });
+  });
+  depot.addEventListener("drop", function (e) {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) choisir(e.dataTransfer.files[0]);
+  });
+
+  /* ---------- Envoi ---------- */
+  function cacherMessages() { $("msg-ok").hidden = true; $("msg-ko").hidden = true; }
+  function echec(titre, detail) {
+    var b = $("msg-ko");
+    b.textContent = "";
+    var p1 = document.createElement("p");
+    var f = document.createElement("strong");
+    f.textContent = titre;
+    p1.appendChild(f);
+    b.appendChild(p1);
+    if (detail) {
+      var p2 = document.createElement("p");
+      p2.textContent = detail;
+      b.appendChild(p2);
+    }
+    b.hidden = false;
+  }
+
+  function majBouton() {
+    var pret = !!etat.fichier
+      && $("email").value.trim() !== ""
+      && $("cle").value.trim() !== ""
+      && !etat.envoi;
+    $("envoyer").disabled = !pret;
+  }
+  ["email"].forEach(function (id) { $(id).addEventListener("input", majBouton); });
+
+  $("envoyer").addEventListener("click", function () {
+    if (etat.envoi || !etat.fichier) return;
+    cacherMessages();
+
+    var donnees = new FormData();
+    donnees.append("fichier", etat.fichier, etat.fichier.name);
+    donnees.append("email", $("email").value.trim());
+    donnees.append("titre", $("titre").value.trim() || "Réunion");
+    donnees.append("langue", $("langue").value);
+    donnees.append("participants", $("participants").value.trim());
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", WEBHOOK, true);
+    xhr.setRequestHeader("x-cle-mistral", $("cle").value.trim());
+
+    etat.envoi = true;
+    majBouton();
+    $("progression").hidden = false;
+    $("barre-remplie").style.width = "0%";
+    $("progression-etat").textContent = "Envoi en cours…";
+    $("progression-pct").textContent = "0 %";
+
+    xhr.upload.addEventListener("progress", function (e) {
+      if (!e.lengthComputable) return;
+      var pct = Math.round(e.loaded / e.total * 100);
+      $("barre-remplie").style.width = pct + "%";
+      $("progression-pct").textContent = pct + " %";
+      if (pct >= 100) $("progression-etat").textContent = "Vérification de la clé Mistral…";
+    });
+
+    xhr.addEventListener("load", function () {
+      etat.envoi = false;
+      $("progression").hidden = true;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var b = $("msg-ok");
+        b.textContent = "";
+        var p1 = document.createElement("p");
+        var f = document.createElement("strong");
+        f.textContent = "Enregistrement reçu.";
+        p1.appendChild(f);
+        p1.appendChild(document.createTextNode(
+          " Le compte rendu et la transcription partiront vers " + $("email").value.trim()
+          + (etat.duree ? ", " + attente(20 + etat.duree / 60 * 1.1 + Math.ceil(etat.duree / TRANCHE) * 9) + " après." : ".")
+        ));
+        b.appendChild(p1);
+        var p2 = document.createElement("p");
+        p2.textContent = "Vous pouvez fermer cette page.";
+        b.appendChild(p2);
+        b.hidden = false;
+        retirer();
+      } else {
+        var rep = {};
+        try { rep = JSON.parse(xhr.responseText || "{}"); } catch (e) {}
+        if (xhr.status === 401) {
+          echec("Clé Mistral refusée.", rep.message || "Mistral n'a pas reconnu cette clé. Vérifiez-la sur console.mistral.ai.");
+          $("cle").focus();
+        } else if (xhr.status === 503) {
+          echec("Clé impossible à vérifier pour le moment.", rep.message || "Mistral ne répond pas. Réessayez dans quelques minutes.");
+        } else if (xhr.status === 404) {
+          echec("Service indisponible (404).", "Le service n'est pas en ligne pour le moment. Prévenez le service PracTice.");
+        } else if (xhr.status === 413) {
+          echec("Fichier trop volumineux.", "Le serveur refuse un fichier de cette taille. Essayez un format plus compact (mp3, m4a).");
+        } else {
+          echec("Le serveur a répondu " + xhr.status + ".", rep.message || (xhr.responseText || "").slice(0, 300));
+        }
+      }
+      // L'audio reste choisi en cas d'échec : on corrige et on renvoie sans le redéposer.
+      majBouton();
+    });
+
+    xhr.addEventListener("error", function () {
+      etat.envoi = false;
+      $("progression").hidden = true;
+      echec("Impossible de joindre le serveur.",
+        "Vérifiez votre connexion. Si le problème persiste, prévenez le service PracTice.");
+      majBouton();
+    });
+
+    xhr.send(donnees);
+  });
+
+  majBouton();
+})();
+</script>
+</body>
+</html>
