@@ -8,7 +8,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#ad1d89">
-<meta name="description" content="Déposez l'enregistrement d'une réunion : transcription et compte rendu Word par e-mail, avec votre propre clé Mistral. Service PracTice, IMT Business School.">
+<meta name="description" content="Déposez l'enregistrement d'une réunion : transcription et compte rendu Word anonyme par e-mail, avec votre propre clé Mistral. Service PracTice, IMT Business School.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&display=swap">
@@ -462,7 +462,7 @@
   <header>
     <p class="eyebrow">PracTice · IMT Business School</p>
     <h1>IMT Smart Minutes</h1>
-    <p class="lede">Déposez l'enregistrement d'une réunion. Il est découpé, transcrit avec ses intervenants, puis rédigé en compte rendu Word, qui vous arrive par e-mail.</p>
+    <p class="lede">Déposez l'enregistrement d'une réunion. Il est découpé, transcrit, puis rédigé en compte rendu Word <strong>anonyme</strong>, qui vous arrive par e-mail : les personnes y sont désignées par « Participant 1 », « Participant 2 »… et c'est vous qui remettez les vrais noms.</p>
   </header>
 
   <section class="fiche" aria-labelledby="titre-cle">
@@ -535,7 +535,7 @@
       </select>
     </div>
     <div class="champ large">
-      <label for="participants">Participants <span class="optionnel">— un par ligne, aide à nommer les voix</span></label>
+      <label for="participants">Personnes présentes <span class="optionnel">— facultatif, une par ligne ; affichées dans l'en-tête du compte rendu, jamais associées aux propos</span></label>
       <textarea id="participants" placeholder="Julien MORICE&#10;Marine CARAYON" autocomplete="off"></textarea>
     </div>
   </div>
@@ -558,8 +558,9 @@
     <h2>Ce qui se passe ensuite</h2>
     <div class="etape"><span class="rang">1</span><span><b>Découpage</b> en tranches de 15 minutes, sans réencodage.</span></div>
     <div class="etape"><span class="rang">2</span><span><b>Transcription</b> tranche par tranche par Mistral Voxtral, avec séparation des voix.</span></div>
-    <div class="etape"><span class="rang">3</span><span><b>Réunion des voix</b> : les empreintes vocales rétablissent qui est qui d'une tranche à l'autre.</span></div>
-    <div class="etape"><span class="rang">4</span><span><b>Compte rendu</b> rédigé par ILaaS, envoyé en Word avec la transcription complète.</span></div>
+    <div class="etape"><span class="rang">3</span><span><b>Réunion des voix</b> : les empreintes vocales reconnaissent une même personne d'une tranche à l'autre, sans chercher à l'identifier.</span></div>
+    <div class="etape"><span class="rang">4</span><span><b>Compte rendu anonyme</b> rédigé par ILaaS, envoyé en Word avec la transcription complète.</span></div>
+    <div class="etape"><span class="rang">5</span><span><b>À vous de nommer</b> : l'encadré « Qui est qui ? », en tête du Word, cite une ou deux phrases de chaque participant. Remplacez ensuite « Participant 1 » par le vrai nom avec Rechercher et remplacer (Ctrl+H, option « Mot entier »).</span></div>
   </section>
 
   <p class="note">La transcription est facturée sur votre compte Mistral ; la rédaction et l'envoi sont pris en charge par le service PracTice. L'enregistrement n'est pas conservé : il est supprimé du serveur dans les heures qui suivent.</p>
@@ -852,7 +853,7 @@
         f.textContent = "Enregistrement reçu.";
         p1.appendChild(f);
         p1.appendChild(document.createTextNode(
-          " Le compte rendu et la transcription partiront vers " + $("email").value.trim()
+          " Le compte rendu anonyme et la transcription partiront vers " + $("email").value.trim()
           + (etat.duree ? ", " + attente(20 + etat.duree / 60 * 1.1 + Math.ceil(etat.duree / TRANCHE) * 9) + " après." : ".")
         ));
         b.appendChild(p1);
