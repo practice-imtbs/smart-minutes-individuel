@@ -575,6 +575,7 @@
   // Workflow n8n « IMT Smart Minutes individuel Production ».
   var WEBHOOK = "https://n8n.srv1205184.hstgr.cloud/webhook/smart-minutes-page";
   var PREFS = "smart-minutes-individuel";
+  var ATTENTE_REPONSE = 8000; // ms d'attente de la réponse n8n une fois le fichier envoyé
   var TRANCHE = 900; // secondes, comme le nœud « Découper l'audio »
 
   var MISTRAL_MODELES = "https://api.mistral.ai/v1/models";
@@ -823,6 +824,7 @@
     donnees.append("langue", $("langue").value);
     donnees.append("participants", $("participants").value.trim());
 
+    var recu = false, minuteur = null;
     var xhr = new XMLHttpRequest();
     xhr.open("POST", WEBHOOK, true);
     xhr.setRequestHeader("x-cle-mistral", $("cle").value.trim());
@@ -839,30 +841,49 @@
       var pct = Math.round(e.loaded / e.total * 100);
       $("barre-remplie").style.width = pct + "%";
       $("progression-pct").textContent = pct + " %";
-      if (pct >= 100) $("progression-etat").textContent = "Finalisation de l'envoi…";
+      if (pct >= 100 && !minuteur) {
+        $("progression-etat").textContent = "Finalisation de l'envoi…";
+        // Le fichier est entièrement parti : n8n répond d'ordinaire en quelques
+        // secondes, mais cette réponse peut rester bloquée en route alors que le
+        // traitement suit son cours. Au-delà de ATTENTE_REPONSE, on considère
+        // l'envoi comme réussi ; un éventuel échec arrive de toute façon par e-mail.
+        minuteur = setTimeout(afficherRecu, ATTENTE_REPONSE);
+      }
     });
 
-    xhr.addEventListener("load", function () {
+    function afficherRecu() {
+      if (recu) return;
+      recu = true;
+      clearTimeout(minuteur);
       etat.envoi = false;
       $("progression").hidden = true;
+      var b = $("msg-ok");
+      b.textContent = "";
+      var p1 = document.createElement("p");
+      var f = document.createElement("strong");
+      f.textContent = "Enregistrement reçu.";
+      p1.appendChild(f);
+      p1.appendChild(document.createTextNode(
+        " Le compte rendu anonyme et la transcription partiront vers " + $("email").value.trim()
+        + (etat.duree ? ", " + attente(20 + etat.duree / 60 * 1.1 + Math.ceil(etat.duree / TRANCHE) * 9) + " après." : ".")
+      ));
+      b.appendChild(p1);
+      var p2 = document.createElement("p");
+      p2.textContent = "Vous pouvez fermer cette page.";
+      b.appendChild(p2);
+      // retirer() masque les messages : on l'appelle avant d'afficher celui-ci.
+      retirer();
+      b.hidden = false;
+    }
+
+    xhr.addEventListener("load", function () {
+      clearTimeout(minuteur);
       if (xhr.status >= 200 && xhr.status < 300) {
-        var b = $("msg-ok");
-        b.textContent = "";
-        var p1 = document.createElement("p");
-        var f = document.createElement("strong");
-        f.textContent = "Enregistrement reçu.";
-        p1.appendChild(f);
-        p1.appendChild(document.createTextNode(
-          " Le compte rendu anonyme et la transcription partiront vers " + $("email").value.trim()
-          + (etat.duree ? ", " + attente(20 + etat.duree / 60 * 1.1 + Math.ceil(etat.duree / TRANCHE) * 9) + " après." : ".")
-        ));
-        b.appendChild(p1);
-        var p2 = document.createElement("p");
-        p2.textContent = "Vous pouvez fermer cette page.";
-        b.appendChild(p2);
-        b.hidden = false;
-        retirer();
+        afficherRecu();
       } else {
+        etat.envoi = false;
+        $("progression").hidden = true;
+        $("msg-ok").hidden = true;
         var rep = {};
         try { rep = JSON.parse(xhr.responseText || "{}"); } catch (e) {}
         if (xhr.status === 401) {
@@ -883,6 +904,10 @@
     });
 
     xhr.addEventListener("error", function () {
+      clearTimeout(minuteur);
+      // Connexion coupée après l'affichage « Enregistrement reçu » : le serveur
+      // avait déjà tout reçu, on ne contredit pas le message.
+      if (recu) return;
       etat.envoi = false;
       $("progression").hidden = true;
       echec("Impossible de joindre le serveur.",
