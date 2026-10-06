@@ -759,7 +759,7 @@
       $("barre-remplie").style.width = pct + "%";
       $("progression-pct").textContent = pct + " %";
       if (pct >= 100 && !minuteur) {
-        $("progression-etat").textContent = "Finalisation de l'envoi…";
+        $("progression-etat").textContent = "";
         // Le fichier est entièrement parti : n8n répond d'ordinaire en quelques
         // secondes, mais cette réponse peut rester bloquée en route alors que le
         // traitement suit son cours. Au-delà de ATTENTE_REPONSE, on considère
