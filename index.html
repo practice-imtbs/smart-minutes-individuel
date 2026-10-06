@@ -8,7 +8,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#ad1d89">
-<meta name="description" content="Déposez l'enregistrement d'une réunion : transcription et compte rendu Word anonyme par e-mail, avec votre propre clé Mistral. Service PracTice, IMT Business School.">
+<meta name="description" content="Déposez l'enregistrement d'une réunion : transcription et compte rendu Word anonyme par e-mail, réservé aux adresses @imt-bs.eu et @imtbs-tsp.eu. Service PracTice, IMT Business School.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:wght@400;500;600&display=swap">
@@ -462,33 +462,8 @@
   <header>
     <p class="eyebrow">PracTice · IMT Business School</p>
     <h1>IMT Smart Minutes</h1>
-    <p class="lede">Déposez l'enregistrement d'une réunion. Il est découpé, transcrit, puis rédigé en compte rendu Word <strong>anonyme</strong>, qui vous arrive par e-mail : les personnes y sont désignées par « Participant 1 », « Participant 2 »… et c'est vous qui remettez les vrais noms.</p>
+    <p class="lede">Déposez l'enregistrement d'une réunion. Il est découpé, transcrit, puis rédigé en compte rendu Word <strong>anonyme</strong>, qui vous arrive par e-mail : les personnes y sont désignées par « Participant 1 », « Participant 2 »… et c'est vous qui remettez les vrais noms. Service réservé aux adresses <strong>@imt-bs.eu</strong> et <strong>@imtbs-tsp.eu</strong> : aucune clé API à fournir.</p>
   </header>
-
-  <section class="fiche" aria-labelledby="titre-cle">
-    <div class="reglages-corps" style="border-top:none; padding-top:16px">
-      <div class="champ">
-        <div class="titre-cle-ligne">
-          <label for="cle" id="titre-cle">Votre clé API Mistral</label>
-          <span class="pastille attente" id="etat-cle" role="status" aria-live="polite">à saisir</span>
-        </div>
-        <div class="cle-ligne">
-          <input type="password" id="cle" placeholder="Collez votre clé" autocomplete="off" spellcheck="false">
-          <button type="button" class="petit-bouton" id="voir" aria-controls="cle" aria-pressed="false">Afficher</button>
-        </div>
-        <p class="detail-cle" id="detail-cle" hidden></p>
-      </div>
-      <label class="coche"><input type="checkbox" id="memoriser"> <span>Mémoriser ma clé sur cet appareil <span class="optionnel">(à éviter sur un ordinateur partagé)</span></span></label>
-      <div class="liens-cle">
-        <span style="font-size:12.5px; display:flex; flex-wrap:wrap; gap:4px 14px">
-          <a href="https://mediaserver.ip-paris.fr/permalink/v126d5d01ee484ud8y4x/" target="_blank" rel="noopener noreferrer">▶ Vidéo : obtenir sa clé pas à pas</a>
-          <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener noreferrer">Créer une clé sur console.mistral.ai</a>
-        </span>
-        <button type="button" class="lien-bouton" id="oublier" hidden>Oublier ma clé</button>
-      </div>
-      <p class="note">La clé n'est envoyée qu'à Mistral, pour la vérifier dès sa saisie, et au serveur n8n du service PracTice, qui s'en sert pour cette seule transcription sans la conserver ni la journaliser.</p>
-    </div>
-  </section>
 
   <div class="depot" id="depot" tabindex="0" role="button" aria-label="Choisir un enregistrement audio">
     <input type="file" id="fichier" accept=".mp3,.m4a,.wav,.ogg,.flac,.webm,audio/*" aria-label="Enregistrement audio">
@@ -524,8 +499,9 @@
       <input type="text" id="titre" placeholder="Réunion de service PracTice" autocomplete="off">
     </div>
     <div class="champ">
-      <label for="email">Adresse e-mail</label>
-      <input type="email" id="email" placeholder="prenom.nom@imt-bs.eu" autocomplete="email">
+      <label for="email">Adresse e-mail de l'école</label>
+      <input type="email" id="email" placeholder="prenom.nom@imt-bs.eu" autocomplete="email" aria-describedby="detail-email">
+      <p class="detail-cle" id="detail-email" hidden></p>
     </div>
     <div class="champ">
       <label for="langue">Langue</label>
@@ -563,7 +539,7 @@
     <div class="etape"><span class="rang">5</span><span><b>À vous de nommer</b> : l'encadré « Qui est qui ? », en tête du Word, cite une ou deux phrases de chaque participant. Remplacez ensuite « Participant 1 » par le vrai nom avec Rechercher et remplacer (Ctrl+H, option « Mot entier »).</span></div>
   </section>
 
-  <p class="note">La transcription est facturée sur votre compte Mistral ; la rédaction et l'envoi sont pris en charge par le service PracTice. L'enregistrement n'est pas conservé : il est supprimé du serveur dans les heures qui suivent.</p>
+  <p class="note">La transcription (Mistral Voxtral), la rédaction (ILaaS) et l'envoi sont pris en charge par le service PracTice : merci d'en faire un usage raisonnable. L'enregistrement n'est pas conservé : il est supprimé du serveur dans les heures qui suivent.</p>
 
 </div>
 
@@ -572,19 +548,19 @@
   "use strict";
 
   var $ = function (id) { return document.getElementById(id); };
-  // Workflow n8n « IMT Smart Minutes individuel Production ».
-  var WEBHOOK = "https://n8n.srv1205184.hstgr.cloud/webhook/smart-minutes-page";
+  // Workflow n8n « IMT Smart Minutes service » : la clé Mistral est celle du service,
+  // l'accès est réservé aux adresses des domaines ci-dessous (revérifié côté serveur).
+  var WEBHOOK = "https://n8n.srv1205184.hstgr.cloud/webhook/smart-minutes-service";
+  var DOMAINES = ["imt-bs.eu", "imtbs-tsp.eu"];
   var PREFS = "smart-minutes-individuel";
   var ATTENTE_REPONSE = 8000; // ms d'attente de la réponse n8n une fois le fichier envoyé
   var TRANCHE = 900; // secondes, comme le nœud « Découper l'audio »
 
-  var MISTRAL_MODELES = "https://api.mistral.ai/v1/models";
-
-  // cle : "vide" | "verif" | "ok" | "ko" | "injoignable"
-  var etat = { fichier: null, duree: null, envoi: false, cle: "vide" };
+  var etat = { fichier: null, duree: null, envoi: false };
 
   /* ---------- Préférences, gardées dans ce navigateur seulement ---------- */
-  // L'e-mail est toujours retenu ; la clé seulement si la case est cochée.
+  // Seul l'e-mail est retenu. Une clé Mistral mémorisée par l'ancienne version
+  // de la page est effacée au chargement.
   function lirePrefs() {
     try {
       var brut = window.localStorage.getItem(PREFS);
@@ -592,86 +568,30 @@
     } catch (e) { return {}; }
   }
   function ecrirePrefs() {
-    var memo = $("memoriser").checked;
     try {
-      window.localStorage.setItem(PREFS, JSON.stringify({
-        email: $("email").value.trim(),
-        cle: memo ? $("cle").value.trim() : ""
-      }));
+      window.localStorage.setItem(PREFS, JSON.stringify({ email: $("email").value.trim() }));
     } catch (e) { /* navigation privée : on continue sans mémoriser */ }
-    $("oublier").hidden = !(memo && $("cle").value.trim());
-    majBouton();
   }
 
-  /* ---------- Vérification de la clé, dès la saisie ---------- */
-  // La page interroge directement Mistral (GET /v1/models, gratuit) : on sait tout
-  // de suite si la clé est bonne, avant d'envoyer le moindre fichier.
-  var ETATS_CLE = {
-    vide: ["à saisir", "attente"],
-    verif: ["vérification…", "attente"],
-    ok: ["clé valide", "ok"],
-    ko: ["clé refusée", "manque"],
-    injoignable: ["non vérifiée", "attente"]
-  };
-  function afficherEtatCle(nouveau, detail) {
-    etat.cle = nouveau;
-    var e = $("etat-cle");
-    e.textContent = ETATS_CLE[nouveau][0];
-    e.className = "pastille " + ETATS_CLE[nouveau][1];
-    $("detail-cle").textContent = detail || "";
-    $("detail-cle").hidden = !detail;
+  /* ---------- Adresse autorisée ---------- */
+  function adresseAutorisee() {
+    var m = /^[^@\s]+@([^@\s]+)$/.exec($("email").value.trim().toLowerCase());
+    return !!m && DOMAINES.indexOf(m[1]) !== -1;
+  }
+  function majAdresse() {
+    var saisie = $("email").value.trim();
+    var refus = /@[^@\s]+\.[^@\s.]{2,}$/.test(saisie) && !adresseAutorisee();
+    $("detail-email").textContent = refus
+      ? "Ce service est réservé aux adresses @imt-bs.eu et @imtbs-tsp.eu."
+      : "";
+    $("detail-email").hidden = !refus;
     majBouton();
-  }
-
-  var tour = 0, minuterie = null;
-  function verifierCle() {
-    var cle = $("cle").value.trim();
-    var ceTour = ++tour;
-    if (!cle) { afficherEtatCle("vide"); return; }
-    afficherEtatCle("verif");
-    fetch(MISTRAL_MODELES, { headers: { Authorization: "Bearer " + cle }, cache: "no-store" })
-      .then(function (rep) {
-        if (ceTour !== tour) return; // une saisie plus récente a pris le relais
-        if (rep.ok) afficherEtatCle("ok");
-        else if (rep.status === 401 || rep.status === 403) afficherEtatCle("ko", "Mistral ne reconnaît pas cette clé. Vérifiez-la sur console.mistral.ai, rubrique API Keys.");
-        else afficherEtatCle("injoignable", "Mistral n'a pas pu confirmer la clé (code " + rep.status + "). Vous pouvez tout de même envoyer : le serveur la revérifiera.");
-      })
-      .catch(function () {
-        if (ceTour !== tour) return;
-        afficherEtatCle("injoignable", "Mistral est injoignable pour le moment. Vous pouvez tout de même envoyer : le serveur la revérifiera.");
-      });
-  }
-  function verifierBientot() {
-    clearTimeout(minuterie);
-    tour++;
-    if (!$("cle").value.trim()) { afficherEtatCle("vide"); return; }
-    afficherEtatCle("verif");
-    minuterie = setTimeout(verifierCle, 500);
   }
 
   var r = lirePrefs();
   $("email").value = r.email || "";
-  $("cle").value = r.cle || "";
-  $("memoriser").checked = !!r.cle;
-  $("oublier").hidden = !r.cle;
-  ["email", "cle"].forEach(function (id) { $(id).addEventListener("input", ecrirePrefs); });
-  $("cle").addEventListener("input", verifierBientot);
-  $("memoriser").addEventListener("change", ecrirePrefs);
-  if (r.cle) verifierCle();
-
-  $("oublier").addEventListener("click", function () {
-    $("cle").value = "";
-    $("memoriser").checked = false;
-    ecrirePrefs();
-    verifierBientot();
-    $("cle").focus();
-  });
-  $("voir").addEventListener("click", function () {
-    var cache = $("cle").type === "password";
-    $("cle").type = cache ? "text" : "password";
-    $("voir").textContent = cache ? "Masquer" : "Afficher";
-    $("voir").setAttribute("aria-pressed", String(cache));
-  });
+  if (r.cle !== undefined) ecrirePrefs();
+  $("email").addEventListener("input", function () { ecrirePrefs(); majAdresse(); });
 
   /* ---------- Mise en forme ---------- */
   function poids(octets) {
@@ -806,12 +726,10 @@
 
   function majBouton() {
     var pret = !!etat.fichier
-      && $("email").value.trim() !== ""
-      && (etat.cle === "ok" || etat.cle === "injoignable")
+      && adresseAutorisee()
       && !etat.envoi;
     $("envoyer").disabled = !pret;
   }
-  ["email"].forEach(function (id) { $(id).addEventListener("input", majBouton); });
 
   $("envoyer").addEventListener("click", function () {
     if (etat.envoi || !etat.fichier) return;
@@ -827,7 +745,6 @@
     var recu = false, minuteur = null;
     var xhr = new XMLHttpRequest();
     xhr.open("POST", WEBHOOK, true);
-    xhr.setRequestHeader("x-cle-mistral", $("cle").value.trim());
 
     etat.envoi = true;
     majBouton();
@@ -886,12 +803,7 @@
         $("msg-ok").hidden = true;
         var rep = {};
         try { rep = JSON.parse(xhr.responseText || "{}"); } catch (e) {}
-        if (xhr.status === 401) {
-          echec("Clé Mistral refusée.", rep.message || "Mistral n'a pas reconnu cette clé. Vérifiez-la sur console.mistral.ai.");
-          $("cle").focus();
-        } else if (xhr.status === 503) {
-          echec("Clé impossible à vérifier pour le moment.", rep.message || "Mistral ne répond pas. Réessayez dans quelques minutes.");
-        } else if (xhr.status === 404) {
+        if (xhr.status === 404) {
           echec("Service indisponible (404).", "Le service n'est pas en ligne pour le moment. Prévenez le service PracTice.");
         } else if (xhr.status === 413) {
           echec("Fichier trop volumineux.", "Le serveur refuse un fichier de cette taille. Essayez un format plus compact (mp3, m4a).");
@@ -918,7 +830,7 @@
     xhr.send(donnees);
   });
 
-  majBouton();
+  majAdresse();
 })();
 </script>
 </body>
