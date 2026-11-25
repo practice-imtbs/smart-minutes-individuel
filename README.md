@@ -9,7 +9,7 @@ recevez par e-mail le **compte rendu Word anonyme** et la **transcription** comp
 
 1. Vous saisissez votre **adresse e-mail de l'école** : le service est réservé aux adresses `@imt-bs.eu` et `@imtbs-tsp.eu`. Aucune clé API n'est demandée.
 2. La page envoie l'audio au serveur n8n du service PracTice, qui confirme la réception aussitôt et revérifie l'adresse.
-3. L'audio est découpé en tranches de 15 minutes, transcrit par Mistral Voxtral avec séparation des voix,
+3. L'audio est découpé en tranches de 15 minutes, transcrit par Gemini 3.8 Flash (Google, via OpenRouter, sans conservation des données) avec séparation des voix,
    les voix sont réunies d'une tranche à l'autre, puis le compte rendu est rédigé par ILaaS.
 4. Le compte rendu (.docx) et la transcription (.txt) arrivent par e-mail depuis `practice@imt-bs.eu`.
 
@@ -24,7 +24,7 @@ l'en-tête, jamais associées aux propos.
 
 ## Prise en charge
 
-La transcription utilise la clé Mistral du service PracTice, conservée sur le serveur n8n et jamais dans la page.
+La transcription utilise la clé OpenRouter du service PracTice (depuis le 25/11/2026 ; Mistral Voxtral auparavant), conservée sur le serveur n8n et jamais dans la page.
 Le service tient un décompte anonyme de l'usage (date, domaine de l'adresse, durée de l'audio), sans titre,
 nom ni contenu. Merci d'en faire un usage raisonnable.
 

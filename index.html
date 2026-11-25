@@ -533,13 +533,13 @@
   <section class="etapes">
     <h2>Ce qui se passe ensuite</h2>
     <div class="etape"><span class="rang">1</span><span><b>Découpage</b> en tranches de 15 minutes, sans réencodage.</span></div>
-    <div class="etape"><span class="rang">2</span><span><b>Transcription</b> tranche par tranche par Mistral Voxtral, avec séparation des voix.</span></div>
+    <div class="etape"><span class="rang">2</span><span><b>Transcription</b> tranche par tranche par le modèle Gemini de Google (via OpenRouter, sans conservation des données), avec séparation des voix.</span></div>
     <div class="etape"><span class="rang">3</span><span><b>Réunion des voix</b> : les empreintes vocales reconnaissent une même personne d'une tranche à l'autre, sans chercher à l'identifier.</span></div>
     <div class="etape"><span class="rang">4</span><span><b>Compte rendu anonyme</b> rédigé par ILaaS, envoyé en Word avec la transcription complète.</span></div>
     <div class="etape"><span class="rang">5</span><span><b>À vous de nommer</b> : l'encadré « Qui est qui ? », en tête du Word, cite une ou deux phrases de chaque participant. Remplacez ensuite « Participant 1 » par le vrai nom avec Rechercher et remplacer (Ctrl+H, option « Mot entier »).</span></div>
   </section>
 
-  <p class="note">La transcription (Mistral Voxtral), la rédaction (ILaaS) et l'envoi sont pris en charge par le service PracTice : merci d'en faire un usage raisonnable. L'enregistrement n'est pas conservé : il est supprimé du serveur dans les heures qui suivent.</p>
+  <p class="note">La transcription (Gemini via OpenRouter), la rédaction (ILaaS) et l'envoi sont pris en charge par le service PracTice : merci d'en faire un usage raisonnable. L'enregistrement n'est pas conservé : il est supprimé du serveur dans les heures qui suivent.</p>
 
 </div>
 
@@ -548,7 +548,7 @@
   "use strict";
 
   var $ = function (id) { return document.getElementById(id); };
-  // Workflow n8n « IMT Smart Minutes service » : la clé Mistral est celle du service,
+  // Workflow n8n « IMT Smart Minutes service » : la clé OpenRouter est celle du service,
   // l'accès est réservé aux adresses des domaines ci-dessous (revérifié côté serveur).
   var WEBHOOK = "https://n8n.srv1205184.hstgr.cloud/webhook/smart-minutes-service";
   var DOMAINES = ["imt-bs.eu", "imtbs-tsp.eu"];
