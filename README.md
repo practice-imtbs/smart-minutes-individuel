@@ -11,6 +11,8 @@ recevez par e-mail le **compte rendu Word anonyme** et la **transcription** comp
 2. La page envoie l'audio au serveur n8n du service PracTice, qui confirme la réception aussitôt et revérifie l'adresse.
 3. L'audio est découpé en tranches de 15 minutes, transcrit par Gemini 3.8 Flash (Google, via OpenRouter, sans conservation des données) avec séparation des voix,
    les voix sont réunies d'une tranche à l'autre, puis le compte rendu est rédigé par ILaaS.
+   La transcription n'est donc **pas souveraine** (l'audio est traité par Google) ; la rédaction l'est (ILaaS),
+   et le compte rendu est anonyme.
 4. Le compte rendu (.docx) et la transcription (.txt) arrivent par e-mail depuis `practice@imt-bs.eu`.
 
 ## Compte rendu anonyme
